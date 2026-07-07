@@ -1,94 +1,128 @@
 import os
+import re
+import json
+import yaml
+import logging
+from pydantic import BaseModel, Field
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 
-# 1. 確保使用與建置時相同的英文 Embedding 模型
+# 1. 初始化日誌系統 (專注紀錄實驗數據與錯誤)
+logging.basicConfig(
+    filename='rag_evaluation.log',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+
+# 2. 固定系統參數
+DEVICE = "mps"
+DB_DIR = "./chroma_db"
+
+# 3. 讀取可控變數
+with open("config.yaml", "r", encoding="utf-8") as f:
+    config = yaml.safe_load(f)
+
+# 4. 初始化模型
 embeddings = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-large-en-v1.5",
-    model_kwargs={'device': 'mps'},
+    model_name=config['models']['embedding'],
+    model_kwargs={'device': DEVICE},
     encode_kwargs={'normalize_embeddings': True}
 )
 
-DB_DIR = "./chroma_db"
+class PaperResponse(BaseModel):
+    title: str = Field(description="論文的主題或標題簡述。若查無資料，請填 '未知'")
+    authors: str = Field(description="論文作者。若查無資料，請填 '未知'")
+    key_conclusions: str = Field(description="繁體中文回答，包含關鍵結論與方法細節。若查無資料，請填 '資料中查無'")
+    relevance_score: int = Field(description="評估資料與問題的相關性分數 (1-10分)。若查無資料，請填 0")
 
 def get_retriever():
     vectorstore = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
-    return vectorstore.as_retriever(search_kwargs={"k": 3})
+    return vectorstore.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={
+            "score_threshold": config['retrieval']['score_threshold'], 
+            "k": config['retrieval']['top_k']
+        }
+    )
 
-# 2. 初始化 Qwen3-8B
-llm = OllamaLLM(model="qwen3:8b", temperature=0.0)
+llm = OllamaLLM(
+    model=config['models']['llm'], 
+    temperature=config['models']['llm_temperature']
+)
 
-# 3. 建立 Query Rewrite (翻譯) Prompt
-translate_template = """
-You are a professional medical and engineering translator. 
-Translate the following user query from Traditional Chinese to English to help with database retrieval.
-ONLY output the translated English text. Do not add any explanations, notes, or conversational text.
+# 5. Prompts
+translate_prompt = PromptTemplate.from_template(config['prompts']['translation'])
+parser = JsonOutputParser(pydantic_object=PaperResponse)
+qa_prompt = PromptTemplate(
+    template=config['prompts']['qa_system'],
+    input_variables=["context", "question"],
+    partial_variables={"format_instructions": parser.get_format_instructions()},
+)
 
-Query: {question}
-Translation:
-"""
-translate_prompt = PromptTemplate.from_template(translate_template)
-
-# 4. 建立最終 QA Prompt (要求模型看英文 Context，回繁體中文)
-qa_template = """
-你是一個專業的生醫工程助理。請「嚴格」根據以下提供的【英文參考資料】來回答使用者的問題。
-請務必以「繁體中文」回答。如果【英文參考資料】中沒有足夠的資訊來回答問題，請明確回覆「資料中查無」，絕對不要編造答案。
-回答時，請在句末附上參考資料的來源（如：[來源: 論文檔名]）。
-
-【英文參考資料】：
-{context}
-
-使用者問題：{question}
-
-繁體中文答案：
-"""
-qa_prompt = PromptTemplate.from_template(qa_template)
-
+# 6. 工具函式
 def format_docs(docs):
     if not docs:
-        return "No relevant information found."
-    return "\n\n".join(f"Content: {doc.page_content}\n[Source: {doc.metadata.get('source_file', 'Unknown')}]" for doc in docs)
+        return ""
+    formatted_str = ""
+    for idx, doc in enumerate(docs):
+        source = doc.metadata.get('source_file', 'Unknown')
+        authors = doc.metadata.get('authors', 'Unknown')
+        formatted_str += f"[Doc {idx+1} | Source: {source} | Authors: {authors}]\nContent: {doc.page_content}\n\n"
+    return formatted_str
 
-def main():
+def strip_think(text: str) -> str:
+    return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+
+# 7. 核心執行邏輯
+def run_query(query: str):
+    if not os.path.exists(DB_DIR):
+        print("請先執行 python src/build_index.py 建立向量庫！")
+        return
+        
+    logging.info(f"--- [Query Input] --- : {query}")
+
     retriever = get_retriever()
+    translation_chain = {"question": RunnablePassthrough()} | translate_prompt | llm | StrOutputParser()
     
-    # 5. 建構兩階段 LCEL Chain
-    
-    # 階段 A：將使用者的中文問題翻譯成英文
-    translation_chain = (
-        {"question": RunnablePassthrough()}
-        | translate_prompt
-        | llm
-        | StrOutputParser()
-    )
-    
-    # 階段 B：定義一個檢索函數，接收英文 Query，回傳格式化後的 Context
     def retrieve_context(english_query):
-        print(f"[Debug] 翻譯後的檢索 Query: {english_query.strip()}")
+        english_query = english_query.strip()
+        logging.info(f"[Translate Rewrite] : {english_query}")
+        
         docs = retriever.invoke(english_query)
+        logging.info(f"[Retrieval Hit]     : {len(docs)} chunks passing threshold.")
         return format_docs(docs)
 
-    # 階段 C：最終生成 Chain (將原始問題與檢索到的 Context 送入 QA Prompt)
-    rag_chain = (
+    base_generation_chain = (
         {
             "context": translation_chain | retrieve_context, 
-            "question": RunnablePassthrough() # 保留原始中文問題
+            "question": RunnablePassthrough()
         }
         | qa_prompt
         | llm
         | StrOutputParser()
+        | strip_think
     )
     
-    # 6. 測試查詢
-    query = "PPG訊號估計心率時,常見的雜訊抑制處理方式有哪些?"
-    print(f"原始問題: {query}\n")
-    print("生成答案中...")
-    response = rag_chain.invoke(query)
-    print("\n最終回覆:\n", response)
+    json_rag_chain = base_generation_chain | parser
+    
+    try:
+        response_dict = json_rag_chain.invoke(query)
+        # 紀錄成功的 JSON 輸出
+        logging.info(f"[Final Output]      : {json.dumps(response_dict, ensure_ascii=False)}")
+        print(json.dumps(response_dict, ensure_ascii=False, indent=2))
+        return response_dict
+    except Exception as e:
+        logging.error(f"[JSON Parsing Error]: {e}")
+        fallback_response = base_generation_chain.invoke(query)
+        logging.info(f"[Fallback Output]   : {fallback_response}")
+        print(fallback_response)
+        return fallback_response
 
 if __name__ == "__main__":
-    main()
+    # 單筆測試用
+    test_query = "PPG訊號估計心率時，常見的雜訊抑制處理方式有哪些？"
+    run_query(test_query)

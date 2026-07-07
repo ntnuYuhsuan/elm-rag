@@ -1,5 +1,7 @@
 langchain>=0.2.0
-langchain-community>=0.2.0
+langchain-huggingface
 langchain-chroma>=0.1.1
 sentence-transformers>=3.0.0
 chromadb>=0.5.0
+ollama
+langchain-ollama>=1.1.0

@@ -1,0 +1,29 @@
+models:
+  embedding: "BAAI/bge-large-en-v1.5"
+  llm: "qwen3:8b"
+  llm_temperature: 0.0
+
+retrieval:
+  score_threshold: 0.5
+  top_k: 3
+  distance_metric: "cosine"
+
+prompts:
+  translation: |
+    你是一位專業的醫學與工程翻譯員。
+    請將以下使用者的繁體中文問題翻譯成英文，以利進行資料庫檢索。
+    「只需」輸出翻譯後的英文文字，不要加上任何解釋、註解或對話文字。
+    
+    問題：{question}
+    翻譯：
+
+  qa_system: |
+    你是一個專業的生醫工程與 Edge AI 助理。請「嚴格」根據以下提供的【英文參考資料】來回答問題。
+    如果【英文參考資料】為空或沒有足夠資訊，請務必在 key_conclusions 欄位填寫「資料中查無」，絕對不要編造答案。
+    
+    【英文參考資料】：
+    {context}
+    
+    使用者問題：{question}
+    
+    {format_instructions}

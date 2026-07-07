@@ -1,0 +1,5 @@
+query,title,authors,key_conclusions,relevance_score,latency_sec,status
+PPG訊號估計心率時，常見的雜訊抑制處理方式有哪些？,PPG訊號估計心率時的雜訊抑制處理方式,Zhang et al.,常見的雜訊抑制處理方式包括使用獨立成分分析（ICA）技術，例如Kim和Yoo提出的基礎ICA演算法搭配區塊交錯處理，以及Krishnan等人提出的頻率域基準ICA。然而，PPG訊號受動態雜訊（MA）污染時，ICA的核心假設（統計獨立性或無相關性）不成立，因此需改進處理方法。,9,71.6,Success (JSON)
+穿戴式裝置的跌倒偵測，常使用哪些IMU特徵？與傳統閾值法相比，SVM有什麼優勢？,穿戴式裝置跌倒偵測的SVM方法比較,Pan et al.,資料中查無,8,54.35,Success (JSON)
+如何利用穿戴裝置的HRV非線性指標來估計乳酸閾值(LTHR)？,利用HRV線性指標估計無氧閾值,Mateo-March et al.,資料中查無,0,75.52,Success (JSON)
+GOMORE 的乳酸閾值演算法是否支援 Apple Watch 的血氧感測器？,未知,未知,資料中查無,0,77.35,Success (JSON)
