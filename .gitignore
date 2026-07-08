@@ -3,4 +3,6 @@ __pycache__/
 *.pyc
 .env
 chroma_db/
+chroma_db_m3/
 data/
+rag_evaluation.log
