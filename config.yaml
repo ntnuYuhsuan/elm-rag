@@ -1,11 +1,13 @@
 models:
   embedding: "BAAI/bge-large-en-v1.5"
-  llm: "qwen3:8b"
+  llm: "qwen3:4b-instruct"
+  # llm: "minicpm-v4.6"
+  # llm: "qwen3:8b"
   llm_temperature: 0.0
 
 retrieval:
   score_threshold: 0.5
-  top_k: 3
+  top_k: 5
   distance_metric: "cosine"
 
 prompts:

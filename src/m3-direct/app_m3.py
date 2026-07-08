@@ -15,6 +15,16 @@ DB_DIR = "./chroma_db_m3" # 指向 M3 資料庫
 with open("config.yaml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
+    print("="*60)
+    print("🚀 ELM RAG Initialization...")
+    print("🔧 [System]")
+    print("   - Apple Silicon(M3) 16GB")
+    print("   - Ollama (Underlying llama.cpp, Q4_K_M Quantization)")
+    print(f"   - LLM: {config['models']['llm']}")
+    print("   - Embedding: BAAI/bge-m3")
+    print("   - Vector DB: ChromaDB")
+    print("   - Documents  : 7 PDF Papers loaded (PPG, ECG, HRV, IMU Fall Detection)")
+    print("="*60)
 # 直接載入 BGE-M3
 embeddings = HuggingFaceEmbeddings(
     model_name="BAAI/bge-m3",

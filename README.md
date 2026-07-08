@@ -33,17 +33,6 @@ python src/m3-direct/app.py
 python src/m3-direct/evaluate.py
 ```
 
-```bash
-# 建立單語向量庫 (預設儲存於 chroma_db_pipeline/)
-python src/pipeline/build_index.py
-
-# 執行 RAG 問答
-python src/pipeline/app.py
-
-# 執行基準批次評估
-python src/pipeline/evaluate.py
-```
-
 ## Settings
 
 實驗參數（模型、溫度、相似度門檻、Prompt）見 `config.yaml`。
