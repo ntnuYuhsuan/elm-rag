@@ -1,5 +1,5 @@
 query,title,authors,key_conclusions,relevance_score,latency_sec,status
-PPG訊號估計心率時，常見的雜訊抑制處理方式有哪些？,PPG訊號估計心率時的雜訊抑制處理方式,Zhang et al.,常見的雜訊抑制處理方式包括使用獨立成分分析（ICA）技術，例如Kim和Yoo提出的基礎ICA演算法搭配區塊交錯處理，以及Krishnan等人提出的頻率域基準ICA。然而，PPG訊號受動態雜訊（MA）污染時，ICA的核心假設（統計獨立性或無相關性）不成立，因此需改進處理方法。,9,71.6,Success (JSON)
-穿戴式裝置的跌倒偵測，常使用哪些IMU特徵？與傳統閾值法相比，SVM有什麼優勢？,穿戴式裝置跌倒偵測的SVM方法比較,Pan et al.,資料中查無,8,54.35,Success (JSON)
-如何利用穿戴裝置的HRV非線性指標來估計乳酸閾值(LTHR)？,利用HRV線性指標估計無氧閾值,Mateo-March et al.,資料中查無,0,75.52,Success (JSON)
-GOMORE 的乳酸閾值演算法是否支援 Apple Watch 的血氧感測器？,未知,未知,資料中查無,0,77.35,Success (JSON)
+PPG訊號估計心率時，常見的雜訊抑制處理方式有哪些？,PPG訊號雜訊抑制與心率估計,Masinelli等人及Peng等人,在PPG訊號估計心率時，常見的雜訊抑制處理方式包括使用帶通濾波器（bandpass-filtered）來過濾0.5 Hz至5 Hz的頻率成分，以排除與PPG數據無關的頻率成分。此外，結合時間限制的獨立成分分析（temporally constrained independent component analysis）與自適應濾波器（adaptive filter）的方法也被用來去除運動雜訊（motion artifact）。這些方法能有效提升PPG訊號的準確性與穩定性，進而提高心率估計的可靠性。,9,159.86,Success (JSON)
+穿戴式裝置的跌倒偵測，常使用哪些IMU特徵？與傳統閾值法相比，SVM有什麼優勢？,穿戴式裝置跌倒偵測的IMU特徵與SVM優勢,"Pan et al., Aziz et al.","穿戴式裝置的跌倒偵測常使用IMU（慣性測量單元）的特徵，例如三軸加速度計的向量總和（Vector Sum, VS）以及峰值分析。與傳統閾值法相比，SVM（支持向量機）在跌倒偵測中具有更高的準確率，因為SVM能處理複雜的非線性模式，並透過多感測器資料融合提升系統的穩定性與準確性。",9,251.03,Success (JSON)
+如何利用穿戴裝置的HRV非線性指標來估計乳酸閾值(LTHR)？,利用HRV非線性指標估計乳酸閾值,Mateo-March et al.,"根據文獻，可以透過分析心率變異性（HRV）的非線性指標，例如去勢波動分析（Detrend Fluctuation Analysis, DFA）的α1閾值，來估計乳酸閾值（LTHR）。研究顯示，DFA α1閾值與乳酸閾值具有良好的相關性，可作為一種無創且經濟的替代方法，尤其適合用於穿戴裝置的應用。",9,166.14,Success (JSON)
+GOMORE 的乳酸閾值演算法是否支援 Apple Watch 的血氧感測器？,未知,未知,資料中查無,0,81.23,Success (JSON)

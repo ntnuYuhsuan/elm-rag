@@ -10,7 +10,7 @@
 
 
 
-## 快速開始
+## QuickStart
 
 ```bash
 # 1. 環境
@@ -20,32 +20,37 @@ pip install -r requirements.txt
 
 # 2. 下載 LLM（預設 qwen3:8b）
 ollama pull qwen3:8b
+```  
 
-# 3. 建立向量索引（PDF → ChromaDB）
-python src/build_index.py
+```bash
+# 建立跨語種向量庫 (預設儲存於 chroma_db_m3/)
+python src/m3-direct/build_index.py
 
-# 4. 執行 RAG（互動問答）
-python src/app.py
+# 執行 RAG 問答
+python src/m3-direct/app.py
 
-# 5. 批次評估（選用）
-python src/evaluate.py
+# 執行基準批次評估
+python src/m3-direct/evaluate.py
 ```
 
-## 輸出檔案
+```bash
+# 建立單語向量庫 (預設儲存於 chroma_db_pipeline/)
+python src/pipeline/build_index.py
 
-| 檔案 | 說明 |
-|------|------|
-| `chroma_db/` | 向量資料庫 |
-| `rag_evaluation.log` | 檢索與生成日誌 |
-| `evaluation_results.csv` | 批次評估結果 |
+# 執行 RAG 問答
+python src/pipeline/app.py
 
-## 設定
+# 執行基準批次評估
+python src/pipeline/evaluate.py
+```
+
+## Settings
 
 實驗參數（模型、溫度、相似度門檻、Prompt）見 `config.yaml`。
 
 ## 參考文獻
 
-將對應 PDF 放入 `data/` 目錄後執行 `python src/build_index.py` 建立索引。
+將對應 PDF 放入 `data/` 目錄後執行 `build_index.py` 建立索引。
 
 ### PPG 運動偽影
 
